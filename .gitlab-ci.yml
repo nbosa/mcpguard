@@ -1,0 +1,9 @@
+mcpguard:
+  image: golang:1.23
+  stage: test
+  script:
+    - go run ./cmd/mcpguard scan . --format json --output mcpguard.json --fail-severity HIGH
+  artifacts:
+    when: always
+    paths:
+      - mcpguard.json

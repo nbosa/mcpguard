@@ -1,0 +1,44 @@
+name: mcpguard
+description: Scan MCP configurations and source files for security risks.
+author: mcpguard
+
+inputs:
+  path:
+    description: Path to scan.
+    required: false
+    default: "."
+  format:
+    description: Report format: json, markdown, html, or sarif.
+    required: false
+    default: "sarif"
+  output:
+    description: Output report file. Leave empty to write to stdout.
+    required: false
+    default: "mcpguard.sarif"
+  fail-severity:
+    description: Minimum severity that fails the action.
+    required: false
+    default: "HIGH"
+  rules-dir:
+    description: Optional directory containing custom YAML rules.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Run mcpguard
+      shell: bash
+      run: |
+        args=(scan "${{ inputs.path }}" --format "${{ inputs.format }}" --fail-severity "${{ inputs.fail-severity }}")
+        if [[ -n "${{ inputs.output }}" ]]; then
+          args+=(--output "${{ inputs.output }}")
+        fi
+        if [[ -n "${{ inputs.rules-dir }}" ]]; then
+          args+=(--rules-dir "${{ inputs.rules-dir }}")
+        fi
+        go run "${GITHUB_ACTION_PATH}/cmd/mcpguard" "${args[@]}"
+
+branding:
+  icon: shield
+  color: red

@@ -1,0 +1,8 @@
+# Ignore generated or fixture files that intentionally contain unsafe patterns.
+tests/fixtures/insecure_tool.py:MCP-SEC-002
+
+# Ignore all findings for a local-only mock config.
+tests/fixtures/claude_desktop_config.json
+
+# Ignore a rule globally after documenting the accepted risk.
+id:MCP-SEC-015

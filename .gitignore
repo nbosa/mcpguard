@@ -1,0 +1,19 @@
+# Binaries
+mcpguard
+mock_server
+tests/fixtures/mock_server
+
+# OS Files
+.DS_Store
+.idea/
+.vscode/
+.antigravitycli/
+.gemini/
+
+# Local cache / logs
+*.log
+*.out
+coverage.txt
+mcpguard.json
+mcpguard.sarif
+results.sarif
