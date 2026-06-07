@@ -1,34 +1,36 @@
 # mcpguard
 
-> The security linter and watchdog for Model Context Protocol (MCP) servers — delivered as a fast, single-binary Go tool from local dev to CI/CD.
+> A stdio MCP guard proxy — local, single-binary, with a pluggable threat-classifier system.
 
-`mcpguard` audits MCP configurations and codebases to identify security risks such as excessive permissions, raw shell execution, Unicode obfuscation/homoglyph attacks, runtime tool schema drift, and exposed credentials using both static analysis and a rule matching engine.
+`mcpguard proxy` sits between a local MCP client and an upstream stdio MCP
+server. It inspects every `tools/call` request and `tools/list` response,
+blocks prompt injection, tool poisoning, and rug-pull schema drift, and
+writes findings as JSONL.
 
----
+Built-in classifiers:
 
-## Key Features
+- **`regex`** — deterministic local regex signatures (always on).
+- **`foundation-models`** — Apple Foundation Models classifier (macOS only,
+  opt-in via `-tags foundationmodels`).
 
-- **Static Analyzer**: Scans configurations (`claude_desktop_config.json`, `mcp.json`) and source directories without execution.
-- **Entropy-Based Secret Detection**: Employs Shannon Entropy calculations combined with pattern matchers to detect credentials, tokens, and private keys.
-- **Obfuscation Detection**: Automatically flags zero-width characters, homoglyphs, and directional overrides.
-- **Ignore Rules**: Robust False-Positive suppression using standard ignore patterns via a `.mcpguard-ignore` file.
-- **Multiple Output Formats**: Export findings directly to JSON, Markdown tables, HTML dashboards, or SARIF 2.1.0 for GitHub Code Scanning.
-- **Runtime Probing**: Connects to stdio MCP servers and detects runtime tool metadata issues or schema mutations.
-- **Guard Proxy**: Runs as a local stdio MCP proxy in front of an upstream MCP server and blocks prompt injection, tool poisoning, and rug-pull schema drift.
-- **CI Integrations**: Includes GitHub Actions, GitLab CI, and pre-commit hook metadata.
-- **Zero Telemetry / Privacy-First**: 100% self-contained. Scans are computed purely locally.
+New classifiers register themselves by implementing the `Classifier` interface
+in `internal/proxy/classifier` and adding their `init()` to the binary.
 
 ---
 
-## Installation
+## Install
 
-Ensure you have Go 1.23+ installed, then build the executable from source:
+```bash
+go install github.com/nbosa/mcpguard/cmd/mcpguard@latest
+```
+
+Or build from source:
 
 ```bash
 go build -o mcpguard ./cmd/mcpguard
 ```
 
-Release builds can stamp version metadata:
+Release builds stamp version metadata:
 
 ```bash
 go build -o mcpguard \
@@ -36,167 +38,276 @@ go build -o mcpguard \
   ./cmd/mcpguard
 ```
 
-To run tests:
+To enable the Apple Foundation Models classifier:
 
 ```bash
-go test ./...
+CGO_ENABLED=1 go build -tags foundationmodels -o mcpguard ./cmd/mcpguard
 ```
 
 ---
 
-## CLI Usage Reference
+## Usage
 
-The primary command is `scan`, which checks the target directory against built-in and custom rule sets:
+```text
+mcpguard [command]
 
-```bash
-./mcpguard scan [path] [flags]
+Available Commands:
+  completion        Generate the autocompletion script for the specified shell
+  help              Help about any command
+  list-classifiers  List registered threat classifiers and their availability
+  proxy             Run a stdio MCP guard proxy in front of an upstream MCP server
+  version           Print mcpguard version information
+  view              Live HTML viewer for a proxy JSONL report
 ```
 
-The dynamic prober can connect to a stdio MCP server defined in a Claude Desktop config:
+### `mcpguard proxy`
+
+Run a stdio MCP guard proxy. The proxy reads JSON-RPC requests from stdin,
+inspects them, forwards them to the upstream server, inspects responses,
+and writes the filtered stream to stdout. Blocked requests/responses
+return JSON-RPC error code `-32090`.
 
 ```bash
-./mcpguard probe --config claude_desktop_config.json --server filesystem --format json
+# Proxy an explicit command
+mcpguard proxy \
+  --upstream-command node \
+  --upstream-arg /path/to/server.js \
+  --proxy-report mcpguard-proxy.jsonl
+
+# Or load a server from a Claude Desktop / mcp.json style config
+mcpguard proxy \
+  --config claude_desktop_config.json \
+  --server filesystem \
+  --proxy-report mcpguard-proxy.jsonl
 ```
 
-Run the guard proxy in front of an upstream stdio MCP server:
-
-```bash
-./mcpguard proxy --upstream-command node --upstream-arg /path/to/server.js --proxy-report mcpguard-proxy.jsonl
-```
-
-Or proxy a server from a Claude Desktop config:
-
-```bash
-./mcpguard proxy --config claude_desktop_config.json --server filesystem --proxy-report mcpguard-proxy.jsonl
-```
-
-The proxy always applies local regex detection. Optional Apple Foundation Models classification can be enabled in a platform-specific build; see `docs/proxy.md`.
-For measuring classifier quality and false-positive risk, see `docs/foundation-model-evals.md`.
-
-Print build metadata with either command:
-
-```bash
-./mcpguard version
-./mcpguard --version
-```
-
-### Flags
+#### Flags
 
 | Flag | Type | Description | Default |
 | :--- | :--- | :--- | :--- |
-| `--rules-dir` | string | Path to a directory containing custom YAML rules. | `""` (Built-in only) |
-| `--format` | string | Output report format: `json`, `markdown`, `html`, `sarif`. | `"markdown"` |
-| `--output` | string | Output file path. Writes to standard output if omitted. | `""` (Stdout) |
-| `--fail-severity` | string | Minimum severity to trigger non-zero exit code (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFO`). | `"HIGH"` |
+| `--upstream-command` | string | Upstream stdio MCP server command | `""` |
+| `--upstream-arg` | string (repeatable) | Argument to pass to `--upstream-command` | `[]` |
+| `--upstream-env` | string (repeatable) | Env var in `KEY=VALUE` form | `[]` |
+| `--upstream-cwd` | string | Working directory for the upstream process | `""` (inherits) |
+| `--proxy-report` | string | Optional JSONL file for findings | `""` (stderr only) |
+| `--classifier` | string (repeatable) | Classifier to apply | `regex` |
+| `--timeout` | int | Per-request upstream timeout (ms) | `30000` |
+| `--max-parse-errors` | int | Abort after this many parse failures | `10` |
+| `--config` | string | Path to a Claude Desktop / mcp.json style config | `""` |
+| `--server` | string | Server name to proxy from `--config` | `""` |
 
-### Exit Codes
+#### Claude Desktop integration
 
-- `0`: Scan finished cleanly with no rules matching or exceeding the `--fail-severity` threshold.
-- `1`: Scan completed and found vulnerabilities matching or exceeding the threshold.
-- `2`: System execution error (e.g. invalid arguments, unreadable configurations).
+Point Claude Desktop at the local proxy instead of the upstream server:
+
+```json
+{
+  "mcpServers": {
+    "guarded-filesystem": {
+      "command": "/usr/local/bin/mcpguard",
+      "args": [
+        "proxy",
+        "--config",
+        "/Users/alice/Library/Application Support/Claude/claude_desktop_config.json",
+        "--server",
+        "filesystem",
+        "--proxy-report",
+        "/tmp/mcpguard-proxy.jsonl"
+      ]
+    }
+  }
+}
+```
+
+#### Signal handling
+
+`mcpguard proxy` translates `SIGINT` and `SIGTERM` into a clean shutdown:
+the upstream process is killed, the report is flushed, and the proxy exits
+with status 0.
+
+### `mcpguard list-classifiers`
+
+Lists the registered classifiers and whether they are available on this host
+and in this build.
+
+```bash
+$ mcpguard list-classifiers
+Registered classifiers:
+  foundation-models — unavailable: rebuild on macOS with CGO_ENABLED=1 and -tags foundationmodels
+    Local Apple Foundation Models classifier (requires macOS + -tags foundationmodels build).
+  regex — available
+    Deterministic local regex signatures for prompt injection and tool poisoning.
+```
+
+### `mcpguard view`
+
+Tails a JSONL report file (the one written by `mcpguard proxy --proxy-report
+PATH`) and serves a real-time HTML viewer over HTTP. New findings appear in
+the browser as the proxy writes them. The HTML is embedded in the binary —
+no JavaScript build step, no external assets, single-file dark-mode UI.
+
+```bash
+# In one terminal: run the proxy and write findings to a file
+mcpguard proxy --config claude_desktop_config.json --server filesystem \
+  --proxy-report /tmp/mcpguard.jsonl
+
+# In another terminal: open the live viewer
+mcpguard view --report /tmp/mcpguard.jsonl
+# → http://127.0.0.1:7337 (open in any browser)
+```
+
+#### Flags
+
+| Flag | Type | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `--report` | string | Path to the proxy JSONL report file (required) | `""` |
+| `--port` | int | HTTP listen port | `7337` |
+| `--no-browser` | bool | Suppress the open-browser hint | `false` |
+
+#### Endpoints
+
+| Path | Description |
+| :--- | :--- |
+| `GET /` | Single-page HTML viewer (embedded) |
+| `GET /events` | SSE stream of findings (see schema below) |
+| `GET /healthz` | `200 ok` if the server is up |
+
+#### Behavior
+
+- **Replay on connect**: a client connecting after the proxy has already
+  written findings will receive the last 1,000 events first, then live
+  updates. This is bounded in memory and bounded by the SSEBufferSize per
+  client.
+- **File truncation**: when the proxy restarts and recreates the report
+  file, the view detects the truncation and resets its offset.
+- **Polling**: 200ms by default. Configurable via the internal package
+  (`view.PollInterval`).
+- **Multiple clients**: each connected browser tab is independent;
+  disconnect/reconnect at will.
+
+### `mcpguard version`
+
+Prints build metadata (version, commit, build date).
 
 ---
 
-## Writing Custom Rules
+## Detection
 
-You can extend `mcpguard` by adding custom rules in YAML files. Place them in a folder and supply it using the `--rules-dir` flag:
+The proxy applies the configured classifiers to:
 
-```yaml
-id: MCP-SEC-101
-title: "Unsafe Command Executable"
-severity: CRITICAL
-description: "Flags direct invocation of system-level utilities in tool configurations."
-remediation: "Ensure the tool uses dedicated client adapters instead of raw host binaries."
-references:
-  - "https://owasp.org/www-project-top-ten/"
-tags:
-  - config
-  - command-execution
-matchers:
-  - type: config_key
-    config_keys: ["command"]
-    pattern: "^(bash|sh|cmd|powershell|pwsh)(\\.exe)?$"
+- Client `tools/call` request `params` (prompt injection check).
+- Upstream `tools/list` response `result` (tool poisoning + rug-pull check).
+- Upstream `tools/call` response `result` (prompt injection check).
+
+A request is blocked when **any** classifier returns a finding. The
+`--classifier` flag accepts a list (repeatable); the first valid name is
+used as the default.
+
+Blocked requests/responses always return JSON-RPC error code `-32090`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 42,
+  "error": {
+    "code": -32090,
+    "message": "mcpguard blocked request: Attempts to override prior/system instructions."
+  }
+}
 ```
 
-Custom rules with the same ID as a built-in rule replace the built-in rule deterministically. This lets teams tune policy locally without duplicate findings.
+Each finding is also written as a JSONL line to stderr and (when
+configured) to `--proxy-report`:
+
+```json
+{
+  "type": "prompt_injection",
+  "severity": "HIGH",
+  "reason": "Attempts to override prior/system instructions.",
+  "location": "client.tools/call.params",
+  "evidence": "ignore all previous instructions",
+  "classifier": "regex",
+  "request_id": "1",
+  "direction": "client_to_upstream",
+  "blocked": true,
+  "timestamp": "2026-06-07T04:07:29Z"
+}
+```
+
+### Threat types
+
+| Type | Severity default | Where |
+| :--- | :--- | :--- |
+| `prompt_injection` | HIGH | `client.tools/call.params` and `upstream.tools/call.result` |
+| `tool_poisoning` | HIGH | `upstream.tools/list.result` |
+| `rug_pull` | CRITICAL | `upstream.tools/list.result` (schema drift vs baseline) |
 
 ---
 
-## Ignore/Suppression Rules (`.mcpguard-ignore`)
+## Writing a custom classifier
 
-Create a `.mcpguard-ignore` file at the root of your scanned directory to suppress false positives or accepted risks:
+A classifier is any type that implements the `Classifier` interface in
+`internal/proxy/classifier`:
 
-```text
-# Ignore a file completely
-test/mock_config.json
-
-# Ignore a specific rule in a specific file
-src/insecure_script.py:MCP-SEC-008
-
-# Ignore a rule globally
-id:MCP-SEC-002
+```go
+type Classifier interface {
+    Name() string
+    Description() string
+    Available() error
+    Classify(ctx context.Context, threat ThreatType, text, location string) (*Finding, error)
+}
 ```
 
-See `.mcpguard-ignore.example` for a starter file.
+Register it from your package's `init()`:
 
----
+```go
+package myclassifier
 
-## CI/CD Pipeline Integration
+import "mcpguard/internal/proxy/classifier"
 
-### GitHub Actions
+type myClassifier struct{}
 
-Save the following definition to execute a scan on pull requests and view findings under Security Alerts:
+func (c *myClassifier) Name() string { return "my-detector" }
+func (c *myClassifier) Description() string { return "..." }
+func (c *myClassifier) Available() error { return nil }
+func (c *myClassifier) Classify(ctx context.Context, threat classifier.ThreatType, text, location string) (*classifier.Finding, error) {
+    if /* detect something */ {
+        return &classifier.Finding{
+            Type:       threat,
+            Severity:   classifier.SeverityHigh,
+            Reason:     "...",
+            Location:   location,
+            Evidence:   "...",
+            Classifier: c.Name(),
+            Blocked:    true,
+            Timestamp:  time.Now(),
+        }, nil
+    }
+    return nil, nil
+}
 
-```yaml
-name: MCP Security Scan
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Codebase
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-
-      - name: Build Scanner
-        run: go build -o mcpguard ./cmd/mcpguard
-
-      - name: Execute Security Scan
-        run: ./mcpguard scan . --format sarif --output results.sarif --fail-severity HIGH
-
-      - name: Upload SARIF report
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
+func init() {
+    classifier.Default().MustRegister(&myClassifier{})
+}
 ```
 
-This repository also includes:
-
-- `action.yml` for using mcpguard as a composite GitHub Action.
-- `.github/workflows/ci.yml` for project CI.
-- `.gitlab-ci.yml` for GitLab CI.
-- `.pre-commit-hooks.yaml` for pre-commit integration.
+Import the package from `cmd/mcpguard/main.go` and rebuild.
 
 ---
 
 ## Development
 
-Useful checks before opening a pull request:
-
 ```bash
-gofmt -w ./cmd ./internal ./tests
 go test ./...
-go build ./cmd/mcpguard
+go test -race ./...
+go vet ./...
+go build ./...
 ```
 
-The scanner is privacy-first: scans run locally and do not call external APIs. Dependency downloads may happen during normal Go builds or CI setup.
+---
+
+## Project status
+
+`mcpguard` v0.2 is a focused, single-purpose tool. It does exactly one
+thing: a stdio MCP guard proxy. Earlier scope (static scanner, dynamic
+prober, SARIF reports) was removed in favour of simplicity and correctness.
