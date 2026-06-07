@@ -7,10 +7,11 @@ import (
 	"os"
 	"sync"
 
-	"mcpguard/internal/proxy/detector"
+	"mcpguard/internal/proxy/classifier"
 )
 
-// Reporter writes proxy security events as JSON lines.
+// Reporter writes proxy security events as JSON lines. Findings are always
+// mirrored to stderr; when Path is set they are also written to a file.
 type Reporter struct {
 	mu   sync.Mutex
 	file *os.File
@@ -33,7 +34,7 @@ func NewReporter(path string) (*Reporter, error) {
 }
 
 // Write emits one finding as JSONL.
-func (r *Reporter) Write(finding detector.Finding) error {
+func (r *Reporter) Write(finding classifier.Finding) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

@@ -1,6 +1,15 @@
 
 # mcpguard — MCP Security Scanner (Go Stack Architecture Brief)
 
+> **Note (v0.2):** This file is retained as a design history / vision
+> document. The current v0.2 scope is **stdio MCP guard proxy only** —
+> see the top-level `README.md` and `docs/proxy.md` for what is actually
+> built and shipped. The static analyzer, dynamic prober, rules engine,
+> and reporting layer described below were removed in the v0.2 focus
+> refactor in favour of simplicity and correctness. The classifier
+> plugin system (see "Plugin strategy" below) survives as the extension
+> point used today by `regex` and `foundation-models`.
+
 You are a senior Go architect and security engineer with deep expertise in
 AI/LLM security, Model Context Protocol (MCP), DevSecOps, and security tooling.
 Your task is to design a production-ready, open-source architecture for

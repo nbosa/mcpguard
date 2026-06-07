@@ -1,7 +1,10 @@
-- id: mcpguard
-  name: mcpguard
-  description: Scan MCP configs and source files for security risks.
-  entry: mcpguard scan
-  language: golang
-  pass_filenames: false
-  args: ["."]
+- repo: https://github.com/nbosa/mcpguard
+  rev: v0.2.0
+  hooks:
+    - id: mcpguard-proxy-precommit
+      name: mcpguard proxy pre-commit self-check
+      description: Run mcpguard proxy in self-check mode against the staged MCP config.
+      entry: mcpguard proxy --config claude_desktop_config.json --server
+      language: system
+      files: ^(claude_desktop_config\.json|\.mcp\.json)$
+      pass_filenames: false

@@ -1,9 +1,28 @@
-mcpguard:
-  image: golang:1.23
+stages:
+  - test
+  - build
+
+variables:
+  GO_VERSION: "1.23"
+  GOPROXY: "https://proxy.golang.org,direct"
+
+default:
+  image: golang:${GO_VERSION}
+  before_script:
+    - go version
+    - go mod download
+
+test:
   stage: test
   script:
-    - go run ./cmd/mcpguard scan . --format json --output mcpguard.json --fail-severity HIGH
+    - go vet ./...
+    - go test -race -count=1 ./...
+
+build:
+  stage: build
+  script:
+    - go build -o mcpguard ./cmd/mcpguard
   artifacts:
-    when: always
     paths:
-      - mcpguard.json
+      - mcpguard
+    expire_in: 1 day
