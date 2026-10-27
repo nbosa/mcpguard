@@ -1,7 +1,5 @@
 # CLI reference — mcp-guard v0.6.0
 
-> Simplified Chinese: [../zh-CN/cli.md](../zh-CN/cli.md)
-
 ```
 mcp-guard <command> [options]
 ```

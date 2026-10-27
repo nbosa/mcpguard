@@ -1,7 +1,5 @@
 # Policy reference — mcp-guard v0.6.0
 
-> Simplified Chinese: [../zh-CN/policy.md](../zh-CN/policy.md)
-
 Policies are TOML documents with three sections: `[meta]`, `[settings]` and
 `[[rule]]`. The built-in default lives in
 `src/mcp_guard/data/default_policy.toml` and can be copied as a starting

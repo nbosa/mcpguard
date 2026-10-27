@@ -1,7 +1,5 @@
 # Architecture — mcp-guard v0.6.0
 
-> Simplified Chinese: [../zh-CN/architecture.md](../zh-CN/architecture.md)
-
 ## 1. Design goals
 
 mcp-guard is built around five constraints:

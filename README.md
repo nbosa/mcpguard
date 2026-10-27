@@ -226,14 +226,14 @@ To report a vulnerability, see the reporting section of
 
 ## Documentation
 
-| Topic | English | Simplified Chinese |
-| --- | --- | --- |
-| Architecture | [docs/en/architecture.md](docs/en/architecture.md) | [docs/zh-CN/architecture.md](docs/zh-CN/architecture.md) |
-| Rules | [docs/en/rules.md](docs/en/rules.md) | [docs/zh-CN/rules.md](docs/zh-CN/rules.md) |
-| Command line | [docs/en/cli.md](docs/en/cli.md) | [docs/zh-CN/cli.md](docs/zh-CN/cli.md) |
-| Policy | [docs/en/policy.md](docs/en/policy.md) | [docs/zh-CN/policy.md](docs/zh-CN/policy.md) |
-| ETDI pinning | [docs/en/etdi.md](docs/en/etdi.md) | [docs/zh-CN/etdi.md](docs/zh-CN/etdi.md) |
-| Security | [docs/en/security.md](docs/en/security.md) | [docs/zh-CN/security.md](docs/zh-CN/security.md) |
+| Topic | Reference |
+| --- | --- |
+| Architecture | [docs/en/architecture.md](docs/en/architecture.md) |
+| Rules | [docs/en/rules.md](docs/en/rules.md) |
+| Command line | [docs/en/cli.md](docs/en/cli.md) |
+| Policy | [docs/en/policy.md](docs/en/policy.md) |
+| ETDI pinning | [docs/en/etdi.md](docs/en/etdi.md) |
+| Security | [docs/en/security.md](docs/en/security.md) |
 
 The unified architecture of both halves is described in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

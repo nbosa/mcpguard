@@ -1,7 +1,5 @@
 # Rule catalogue — mcp-guard v0.6.0
 
-> Simplified Chinese: [../zh-CN/rules.md](../zh-CN/rules.md)
-
 mcp-guard ships **38 built-in rules** across four plugins. Every rule has a
 stable identifier, a default severity, a remediation hint, and can be
 enabled, disabled, re-severity'd or re-worded from a policy.

@@ -1,7 +1,5 @@
 # The ETDI format — mcp-guard v0.6.0
 
-> Simplified Chinese: [../zh-CN/etdi.md](../zh-CN/etdi.md)
-
 **ETDI** — *Extended Tool Description & Integrity* — is the descriptor format
 mcp-guard pins.
 

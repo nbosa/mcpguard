@@ -50,9 +50,8 @@ codename is `oss`.
 - A zero-dependency core. The scanner, the policy engine, the audit chain and
   every plugin need nothing beyond Python 3.11 and the standard library; the
   MCP SDK is confined to the `proxy` extra.
-- Release documentation: an English and a Simplified Chinese README, a
-  bilingual changelog, a security policy, a contribution guide and an
-  architecture note.
+- Release documentation: an English README, changelog, security policy,
+  contribution guide, and architecture reference.
 - `check_secrets.py`, a standalone hygiene scanner that reads the whole
   repository, including itself, and reports the shape of personal data and
   credential material without ever printing the value it found.
@@ -81,24 +80,6 @@ codename is `oss`.
 - A matched canary token is written to the audit log as a fingerprint, never
   as the token itself.
 
-### English
-
-The first public MIT-licensed release. It publishes the policy-enforcing
-proxy, the tamper-evident audit chain, the four guard plugins
-(`etdi_pinning`, `ansi_sanitize`, `path_shape`, `canary_exfil`), ETDI
-pinning and the unified command line, with a zero-dependency core.
-
-### 中文
-
-首个面向公众发布的 MIT 许可证版本。本次发布包含执行策略的代理、可验证
-篡改的审计链、四个共享的护栏插件（`etdi_pinning`、`ansi_sanitize`、
-`path_shape`、`canary_exfil`）、ETDI 固定清单，以及统一的命令行界面。核心
-部分除 Python 3.11 标准库外没有任何外部运行时依赖，代理所需的 MCP SDK 被
-限定在 `proxy` 附加依赖组中。
-
-策略默认拒绝未被列出的工具；策略中的正则表达式在加载时会经过静态分析与
-计时探测两道检查；审计记录同时带有哈希链与带密钥的 HMAC，金丝雀令牌只以
-指纹形式写入日志。
 
 ## [0.6.0] - 2026-09-30
 
@@ -128,17 +109,6 @@ plugins and the unified command line.
 - The regular expression guard, which refuses a policy pattern that could
   stall the proxy.
 
-### English
-
-The release that established the architecture of the project: a proxy that
-enforces a deny-by-default policy, a hash-chained and keyed audit log, four
-plugins and ETDI pinning, all behind one command line.
-
-### 中文
-
-奠定本项目架构的版本：执行默认拒绝策略的代理、带有哈希链与带密钥 HMAC 的
-审计日志、四个护栏插件以及 ETDI 固定清单，统一由同一套命令行驱动。本次
-发布中金丝雀外泄探测器、路径守卫和正则表达式守卫均已到位。
 
 ## [0.5.0] - 2026-08-15
 
@@ -151,13 +121,3 @@ plugins were split out of the engine.
 - The severity scale `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` and the
   `fail_on` and `warn_on` thresholds.
 - Policy linting with stable diagnostic codes.
-
-### English
-
-The first release with a scanner and a policy model, and with the severity
-scale that the later releases kept.
-
-### 中文
-
-首个具备扫描器与策略模型的版本，并引入了后续版本一直沿用的严重级别标尺
-以及稳定的诊断错误码。
