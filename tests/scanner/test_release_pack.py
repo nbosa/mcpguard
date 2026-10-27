@@ -131,7 +131,6 @@ def test_manifest_covers_the_tests_and_docs(artifacts):
     paths = {path for path, _size, _digest in _manifest_rows(artifacts)}
     assert any(path.startswith("tests/") for path in paths)
     assert "docs/en/rules.md" in paths
-    assert "docs/zh-CN/rules.md" in paths
 
 
 def test_manifest_excludes_itself_and_the_zip(artifacts):
@@ -159,7 +158,6 @@ def test_zip_contains_the_entry_points(artifacts):
         names = {name.split("/", 1)[1] for name in archive.namelist() if "/" in name}
     for expected in (
         "README.md",
-        "README.zh-CN.md",
         "REPORT.md",
         "MANIFEST.md",
         "VERIFY.md",
@@ -172,7 +170,6 @@ def test_zip_contains_the_entry_points(artifacts):
         "src/mcp_guard/cli/main.py",
         "src/mcp_guard/data/default_policy.toml",
         "docs/en/rules.md",
-        "docs/zh-CN/rules.md",
         "examples/policy.toml",
         "examples/transcript.json",
         "tests/test_adversarial_runtime.py",

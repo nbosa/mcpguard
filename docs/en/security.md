@@ -1,7 +1,5 @@
 # Security model — mcp-guard v0.6.0
 
-> Simplified Chinese: [../zh-CN/security.md](../zh-CN/security.md)
-
 ## 1. What mcp-guard is
 
 mcp-guard is a **detection and audit layer**. It reads what an MCP agent

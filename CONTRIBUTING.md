@@ -113,8 +113,7 @@ rule id to a severity, an operator-facing message and a remediation hint.
 4. **Choose the severity honestly.** `CRITICAL` and `HIGH` block a request in
    the proxy. `MEDIUM` and below are informational there, and the offline
    thresholds decide whether they fail a run.
-5. **Document it.** Add the rule to the rules reference in `docs/en/rules.md`
-   and in `docs/zh-CN/rules.md`.
+5. **Document it.** Add the rule to the rules reference in `docs/en/rules.md`.
 6. **Test it.** Add a case to the plugin's test module and a case to the
    plugin's `self_test()` method, so that `mcp-guard selftest` covers it too.
 
@@ -138,8 +137,8 @@ A plugin is a class that derives from `GuardPlugin`.
 5. **Add its settings** to the policy model in `src/mcp_guard/core/policy.py`
    and to the built-in default, so that the setting has a default and a
    documented type.
-6. **Document it.** Add the plugin to the plugin tables in both READMEs, to
-   the rules reference in both languages, and to the architecture note.
+6. **Document it.** Add the plugin to the plugin tables in `README.md`, to
+   the rules reference in `docs/en/rules.md`, and to the architecture note.
 7. **Test it.** Add a test module under `tests/scanner/` with a clean case
    and at least one case per rule.
 
@@ -179,8 +178,7 @@ archives, so a value that has been committed cannot hide behind a file name.
 - `check_secrets.py` reports no finding.
 - New behaviour has a test; a bug fix has a test that fails without the
   fix.
-- Documentation is updated in both English and Simplified Chinese when the
-  change affects the documented behaviour. The two trees carry the same set
-  of files, and the test suite checks that they do.
+- Documentation in `README.md` and `docs/en/` is updated when the change
+  affects the documented behaviour.
 - When the change alters a command, a flag, an exit code, a rule id or a
   default, the changelog gets an entry under the unreleased heading.
