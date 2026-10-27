@@ -1,0 +1,126 @@
+# corpusguard reference policy -- mcp-guard 0.5 native features ONLY.
+#
+# This is the policy the corpus in ./cases is measured against.  It is the
+# 0.4 reference policy with the element constraints added, and it is written
+# here rather than taken from the upstream corpus, which is read-only.
+#
+# WHAT WAS READ WHEN THIS FILE WAS WRITTEN:
+#   * mcp-guard 0.5 README section 4 (policy reference), 4.1 tool rules, 4.2
+#     argument constraints, 4.3 path constraints and 4.4 "list and map
+#     arguments".
+#   * mcp-guard 0.5 src/mcp_guard/policy.py -- PolicyEngine.evaluate() and
+#     ArgumentConstraint.check()/_check(), because the check order decides
+#     which reason a call fails with, and whether a failure is reachable.
+#   * mcp-guard 0.5 src/mcp_guard/paths.py -- check_path(): resolve-then-
+#     compare, a relative prefix refusing an absolute candidate outright.
+#   * mcp-guard 0.5 examples/policy.list-paths.yaml.
+#
+# Paths resolve against the proxy's --base-dir, which the harness sets to the
+# directory that holds cases/workspace, so "./cases/workspace" is the fixture
+# workspace and "../CANARY-ESCAPE-9f3a.txt" is outside it.
+#
+# This policy is not a hardened deployment.  It is the policy that makes the
+# corpus measurable: one allow-list entry per fixture tool, carrying the
+# narrowest native constraint expected to hold.
+
+version: 1
+default_action: deny
+
+session:
+  max_calls: 500
+
+tools:
+
+  # -- 05 The list-taking variant of the same advisory.
+  #
+  # In 0.4 this was the whole constraint: type and length.  There was no way
+  # to say "every element must stay inside the workspace", because
+  # path_prefix against a list yields a violation instead of a descent into
+  # it.  The list-form traversal was therefore allowed.
+  #
+  # In 0.5 the elements carry the constraint.  `items` declares it, and the
+  # per-element application of `path_prefix` means the elements are checked
+  # even without it -- both are shown here so the corpus measures the
+  # declared form.
+  git_add_many:
+    action: allow
+    reason: "list-form staging is confined to the fixture workspace"
+    arguments:
+      files:
+        type: array
+        required: true
+        max_length: 64
+        items:
+          type: string
+          max_length: 4096
+          path_prefix: "./cases/workspace"
+      repo_path:
+        type: string
+        max_length: 512
+        path_prefix: "./cases/workspace"
+
+  # -- The same rule written the short way: path_prefix on an array is
+  # applied to every element.
+  git_add_many_short:
+    action: allow
+    reason: "list-form staging is confined to the fixture workspace"
+    arguments:
+      files:
+        type: array
+        required: true
+        max_length: 64
+        path_prefix: "./cases/workspace"
+      repo_path:
+        type: string
+        max_length: 512
+        path_prefix: "./cases/workspace"
+
+  # -- 05a The single-path variant, unchanged since 0.2.
+  git_add:
+    action: allow
+    reason: "single-path staging is confined to the fixture workspace"
+    arguments:
+      files:
+        type: string
+        required: true
+        max_length: 4096
+        path_prefix: "./cases/workspace"
+      repo_path:
+        type: string
+        max_length: 512
+        path_prefix: "./cases/workspace"
+
+  # -- A map of paths to contents: the keys are the paths, the values are the
+  # contents and are not paths, so only the keys carry the constraint.
+  write_files:
+    action: allow
+    reason: "writing into the fixture workspace is allowed"
+    arguments:
+      files:
+        type: object
+        required: true
+        keys:
+          type: string
+          max_length: 4096
+          path_prefix: "./cases/workspace"
+        values:
+          type: string
+          max_length: 65536
+
+  # -- A map of old paths to new paths: both sides are paths, so both sides
+  # carry the constraint.
+  git_rename:
+    action: allow
+    reason: "renaming files inside the fixture workspace is allowed"
+    arguments:
+      renames:
+        type: object
+        required: true
+        keys:
+          type: string
+          max_length: 4096
+          path_prefix: "./cases/workspace"
+        values:
+          type: string
+          max_length: 4096
+          path_prefix: "./cases/workspace"

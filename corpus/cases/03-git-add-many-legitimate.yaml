@@ -1,0 +1,55 @@
+# 03-git-add-many-legitimate
+# The control: a legitimate multi-file staging must still be allowed.
+# class: path-traversal | documented_miss: false
+#
+# A fix that refuses every list would also "pass" the malicious case.  This
+# case is the other half of the measurement: the same tool, the same policy
+# rule, a list of paths that are all inside the workspace.
+#
+# It is measured against the short form of the rule (path_prefix on an array,
+# applied to every element) and against the map form (keys and values).
+case_id: 03-git-add-many-legitimate
+entry: 5
+entry_ids:
+- CVE-2026-27735
+- GHSA-vjqx-cfc4-9h6v
+class: path-traversal
+title: git_add_many staged several workspace files (legitimate)
+notes: The legitimate half of the list-form case.  Both the declared
+  `items:` form and the short per-element form must allow it, and the map
+  form must allow a map of workspace paths.
+server: git-server
+documented_miss: false
+primary: l1
+tool:
+  name: git_add_many_short
+  description: Stage several files into the repository index.
+  inputSchema:
+    type: object
+    properties:
+      files:
+        type: array
+        items:
+          type: string
+      repo_path:
+        type: string
+    required:
+    - files
+calls:
+- id: l1
+  kind: legitimate
+  rationale: Staging several workspace files through the short per-element rule.
+  arguments:
+    files:
+    - cases/workspace/repo-a/src/app.py
+    - cases/workspace/repo-a/README.md
+    - cases/workspace/repo-a/src/util.py
+    repo_path: cases/workspace/repo-a
+  expected: allow
+- id: l2
+  kind: legitimate
+  rationale: An empty list stages nothing and has no path that can escape.
+  arguments:
+    files: []
+    repo_path: cases/workspace/repo-a
+  expected: allow

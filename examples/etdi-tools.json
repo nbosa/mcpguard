@@ -1,0 +1,59 @@
+{
+  "etdi": "1.0",
+  "server": {
+    "name": "workspace",
+    "version": "1.4.2"
+  },
+  "tools": [
+    {
+      "name": "read_file",
+      "title": "Read file",
+      "description": "Read a UTF-8 text file from the workspace.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Workspace relative path"
+          },
+          "max_bytes": {
+            "type": "integer",
+            "description": "Read at most this many bytes"
+          }
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "list_dir",
+      "title": "List directory",
+      "description": "List the entries of a workspace directory.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "search",
+      "title": "Search files",
+      "description": "Search workspace files with a regular expression.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": ["pattern"]
+      }
+    }
+  ]
+}

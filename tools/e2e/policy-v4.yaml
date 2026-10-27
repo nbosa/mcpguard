@@ -1,0 +1,11 @@
+# The constraint mcp-guard 0.4 can express for a list: type and length.
+version: 1
+default_action: deny
+tools:
+  git_add_many:
+    action: allow
+    arguments:
+      files:
+        type: array
+        required: true
+        max_length: 64

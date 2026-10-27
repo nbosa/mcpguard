@@ -1,0 +1,64 @@
+# A default-deny policy.
+#
+# Every tool that is not listed here is denied.  Start from this file, add the
+# tools you actually need, and keep it that way: an allow list that grows on
+# its own is an allow list that leaks.
+
+version: 1
+default_action: deny
+
+# The lifetime of the ephemeral session token.  --ttl on the command line
+# overrides this value.
+session:
+  ttl_seconds: 900
+  # The maximum number of tool calls in the whole session (all tools).
+  max_calls: 500
+
+# Policy for the MCP methods that are not tool calls.  By default every
+# method is relayed to the upstream.  Uncomment to tighten this down.
+# methods:
+#   allow:
+#     - resources/list
+#     - resources/read
+#   deny:
+#     - resources/subscribe
+
+tools:
+  # A tool that may be called, without any constraint on its arguments.
+  # ping_server:
+  #   action: allow
+
+  # A tool with argument constraints.  Every constraint that is present must
+  # hold, otherwise the call is refused and never reaches the upstream.
+  # read_file:
+  #   action: allow
+  #   reason: "reading inside the workspace is allowed"
+  #   rate_limit_per_minute: 30
+  #   max_calls: 200
+  #   arguments:
+  #     path:
+  #       type: string
+  #       required: true
+  #       max_length: 4096
+  #       path_prefix: "./workspace"
+  #     offset:
+  #       type: integer
+  #       min: 0
+  #       max: 10000
+
+  # A tool that is refused.
+  # run_shell:
+  #   action: deny
+  #   reason: "shell access is not permitted by policy"
+
+  # A tool that needs an explicit approval before it runs.  The proxy answers
+  # with the stable error code "approval_required" and does not forward the
+  # call.
+  # send_email:
+  #   action: allow
+  #   require_approval: true
+  #   arguments:
+  #     to:
+  #       type: string
+  #       required: true
+  #       regex: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"

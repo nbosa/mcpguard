@@ -1,7 +1,0 @@
-- id: mcpguard
-  name: mcpguard
-  description: Scan MCP configs and source files for security risks.
-  entry: mcpguard scan
-  language: golang
-  pass_filenames: false
-  args: ["."]

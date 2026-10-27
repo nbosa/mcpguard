@@ -1,0 +1,86 @@
+# 02-git-add-many-list-traversal
+# The list form of the same advisory.  This is the case 0.4 could not reach.
+# class: path-traversal | documented_miss: false (in 0.4: true)
+#
+# The corpus's own payload, files=['../CANARY-ESCAPE-9f3a.txt'], on the
+# list-taking variant of the same tool.
+#
+# In 0.4, ArgumentConstraint.check() applied path_prefix and regex to string
+# values only.  A list was checked for its type and its length and its
+# elements were never looked at, so this call was ALLOWED -- the sharpest
+# limitation the corpus regression found.
+#
+# In 0.5 the elements are checked: the reference policy declares
+# `items.path_prefix`, and path_prefix on an array is applied to every
+# element whether it is declared under `items` or not.
+case_id: 02-git-add-many-list-traversal
+entry: 5
+entry_ids:
+- CVE-2026-27735
+- GHSA-vjqx-cfc4-9h6v
+class: path-traversal
+title: git_add_many staged files from outside the repository (list form)
+notes: The list form of the same advisory, closed by the per-element
+  constraints of 0.5.  The malicious call is refused; the legitimate
+  multi-file staging is still allowed.
+server: git-server
+documented_miss: false
+primary: m1
+tool:
+  name: git_add_many
+  description: Stage several files into the repository index.
+  inputSchema:
+    type: object
+    properties:
+      files:
+        type: array
+        items:
+          type: string
+      repo_path:
+        type: string
+    required:
+    - files
+calls:
+- id: m1
+  kind: malicious
+  rationale: "The corpus payload verbatim: a traversal inside a list argument."
+  arguments:
+    files:
+    - ../CANARY-ESCAPE-9f3a.txt
+    repo_path: cases/workspace/repo-a
+  expected: block
+- id: m2
+  kind: malicious
+  rationale: "The traversal is not the first element: every element is checked."
+  arguments:
+    files:
+    - cases/workspace/repo-a/src/app.py
+    - ../CANARY-ESCAPE-9f3a.txt
+    repo_path: cases/workspace/repo-a
+  expected: block
+- id: m3
+  kind: malicious
+  rationale: A wrong type in a list is a violation, not a skipped element.
+  arguments:
+    files:
+    - cases/workspace/repo-a/src/app.py
+    - 42
+    repo_path: cases/workspace/repo-a
+  expected: block
+- id: l1
+  kind: legitimate
+  rationale: Staging workspace files.
+  arguments:
+    files:
+    - cases/workspace/repo-a/src/app.py
+    - cases/workspace/repo-a/README.md
+    repo_path: cases/workspace/repo-a
+  expected: allow
+- id: l2
+  kind: legitimate
+  rationale: Staging one workspace file.
+  arguments:
+    files:
+    - cases/workspace/repo-a/src/app.py
+    repo_path: cases/workspace/repo-a
+  expected: allow
