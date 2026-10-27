@@ -1,0 +1,115 @@
+# mcp-guard default policy
+#
+# This file mirrors the built-in default policy (mcp_guard.core.policy.DEFAULT_POLICY_DOC).
+# Copy it, adjust it, and pass it with `--policy` to override the defaults.
+#
+#   mcp-guard check transcript.json --policy my-policy.toml
+
+[meta]
+name = "mcp-guard-default"
+version = "1.0.0"
+locale = "en"
+
+[settings]
+# Findings at or above this level fail the run.
+fail_on = "HIGH"
+# Findings at or above this level produce a warning (but do not fail).
+warn_on = "MEDIUM"
+# Redact credential material from finding evidence.
+redact_evidence = true
+# Maximum length of the evidence string attached to a finding.
+max_evidence_chars = 240
+# Strict mode: treat unknown settings as errors rather than warnings.
+strict = true
+
+[settings.etdi]
+# Require a pin manifest when an ETDI document is present.
+require_pins = true
+# Report schema drift as CRITICAL instead of MEDIUM.
+fail_on_drift = true
+# Tolerate tools that are advertised but not pinned.
+allow_unpinned = false
+
+[settings.path]
+# Directory names that indicate credential material.
+sensitive_names = [
+  ".ssh",
+  ".aws",
+  ".gnupg",
+  ".kube",
+  ".docker",
+  ".config",
+  ".netrc",
+  ".npmrc",
+  ".pypirc",
+  "credentials",
+  "secrets",
+]
+# File name patterns that indicate credential material.
+sensitive_files = [
+  "id_rsa",
+  "id_ed25519",
+  "id_ecdsa",
+  "id_dsa",
+  ".env",
+  ".env.local",
+  "*.pem",
+  "*.key",
+  "*.p12",
+  "*.pfx",
+  "*.keystore",
+  "shadow",
+  "authorized_keys",
+  "known_hosts",
+  "credentials",
+]
+# Absolute prefixes that indicate host reconnaissance.
+system_prefixes = [
+  "/etc",
+  "/proc",
+  "/sys",
+  "/dev",
+  "/boot",
+  "/var/run",
+  "/var/log",
+  "/root",
+]
+# When non-empty, every path must live under one of these roots.
+allowed_roots = []
+# The directory that "escaping the base directory" is measured against.
+sensitive_root = "~"
+
+[settings.ansi]
+# Keep ANSI escape sequences in the output.
+allow_ansi = false
+# Truncate payloads longer than this many characters.
+max_output_chars = 100000
+# Remove residual C0 control characters.
+strip_control_chars = true
+# Detect bidirectional text overrides (Trojan Source).
+detect_bidi = true
+
+[settings.canary]
+# Canary tokens planted in the environment. Empty means only the generic
+# CANARY-XXXX-XXXX shape is detected.
+tokens = []
+# Tools that can send data out of the environment.
+egress_tools = [
+  "http_fetch",
+  "http_post",
+  "http_request",
+  "fetch",
+  "web_search",
+  "send_email",
+  "slack_post",
+  "github_create_issue",
+  "upload_file",
+]
+# Shannon entropy threshold for "this blob is encoded material".
+entropy_threshold = 4.2
+# Minimum length of a blob before it is considered for entropy analysis.
+min_blob_len = 40
+# Also scan tool results, not just tool call arguments.
+scan_results = true
+# Treat a canary match as CRITICAL.
+block_on_match = true

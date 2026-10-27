@@ -1,0 +1,108 @@
+# Paths in lists and in maps.
+#
+# A tool argument is not always a single path.  `git_add_many` takes a list of
+# files, `write_files` takes a map from a path to its contents.  This policy
+# shows the three ways to say where those paths may point, and what each one
+# checks.
+#
+# Start from examples/policy.default-deny.yaml and add the tools you need.
+# Every tool that is not listed here is denied.
+
+version: 1
+default_action: deny
+
+session:
+  ttl_seconds: 900
+  max_calls: 500
+
+tools:
+
+  # 1. A single path.  Unchanged since 0.2: `type: string` means the argument
+  #    is one path and not a list of paths, and `path_prefix` is where it may
+  #    point.
+  read_file:
+    action: allow
+    reason: "reading inside the workspace is allowed"
+    arguments:
+      path:
+        type: string
+        required: true
+        max_length: 4096
+        path_prefix: "./workspace"
+
+  # 2. A list of paths, the `items:` form.  Every element is checked on its
+  #    own: it must be a string, it must not be longer than 256 characters and
+  #    it must resolve inside the workspace.  One bad element refuses the
+  #    whole call -- the list is never staged partially.
+  #
+  #    `max_length` on the array is the number of elements in the list, not
+  #    the length of an element.
+  git_add_many:
+    action: allow
+    reason: "staging files inside the workspace is allowed"
+    rate_limit_per_minute: 30
+    arguments:
+      files:
+        type: array
+        required: true
+        min_length: 1          # at least one file, please
+        max_length: 64         # at most 64 files per call
+        items:
+          type: string
+          max_length: 256      # each path is at most 256 characters long
+          path_prefix: "./workspace"
+      repo_path:
+        type: string
+        required: true
+        path_prefix: "./workspace"
+
+  # 3. A list of paths without `items:`.  `path_prefix` and `regex` describe
+  #    a string, so they are applied to *every element* of a list.  This is
+  #    the short form of rule 2 and it checks the same thing: an element that
+  #    leaves the prefix refuses the call.
+  #
+  #    Use this form when the elements only need a path constraint.  Use the
+  #    `items:` form when the elements need a type or a length of their own.
+  git_add_many_simple:
+    action: allow
+    reason: "staging files inside the workspace is allowed"
+    arguments:
+      files:
+        type: array
+        path_prefix: "./workspace"
+
+  # 4. A map of paths to contents.  The two sides are declared separately:
+  #    `keys` constrains the paths, `values` constrains what is written.
+  write_files:
+    action: allow
+    reason: "writing inside the workspace is allowed"
+    arguments:
+      files:
+        type: object
+        keys:
+          type: string
+          max_length: 256
+          path_prefix: "./workspace"
+        values:
+          type: string
+          max_length: 65536
+
+  # 5. A map of old paths to new paths.  Both sides are paths, so both sides
+  #    get a `path_prefix`.
+  git_rename:
+    action: allow
+    reason: "renaming files inside the workspace is allowed"
+    arguments:
+      renames:
+        type: object
+        keys:
+          type: string
+          path_prefix: "./workspace"
+        values:
+          type: string
+          path_prefix: "./workspace"
+
+  # A tool that is refused.
+  run_shell:
+    action: deny
+    reason: "shell access is not permitted by policy"

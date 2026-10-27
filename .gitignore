@@ -1,19 +1,18 @@
-# Binaries
-mcpguard
-mock_server
-tests/fixtures/mock_server
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# OS Files
-.DS_Store
-.idea/
-.vscode/
-.antigravitycli/
-.gemini/
+# Virtual environments & caches
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
-# Local cache / logs
-*.log
-*.out
-coverage.txt
-mcpguard.json
-mcpguard.sarif
-results.sarif
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.whl
+*.tar.gz

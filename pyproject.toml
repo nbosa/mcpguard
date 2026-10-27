@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-guard"
+version = "1.0.0"
+description = "Unified security guardrails and runtime proxy for Model Context Protocol agents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "mcp-guard maintainers" }]
+keywords = ["mcp", "model-context-protocol", "security", "guardrails", "proxy", "audit"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+]
+dependencies = []
+
+[project.optional-dependencies]
+proxy = [
+    "mcp>=1.0.0",
+    "anyio>=4.0.0",
+]
+dev = [
+    "pytest>=7.0",
+    "anyio>=4.0.0",
+    "setuptools>=68",
+    "build>=1.0.0",
+    "wheel>=0.40.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/mcp-guard"
+Documentation = "https://github.com/example/mcp-guard/tree/main/docs"
+Repository = "https://github.com/example/mcp-guard"
+
+[project.scripts]
+mcp-guard = "mcp_guard.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mcp_guard = ["data/*.toml"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning"]

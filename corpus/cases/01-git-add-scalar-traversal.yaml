@@ -1,0 +1,50 @@
+# 01-git-add-scalar-traversal
+# The scalar form of the advisory, which 0.2 already closed.
+# class: path-traversal | documented_miss: false
+#
+# One path, one traversal.  The reference policy gives `files` the type
+# `string` and the prefix ./cases/workspace, so the candidate resolves
+# outside the workspace and the call is refused.
+#
+# The expected decisions are assertions about the reference policy in
+# ../reference-policy.yaml, not wishes: a call marked "allow" would be a
+# measured miss.
+case_id: 01-git-add-scalar-traversal
+entry: 5
+entry_ids:
+- CVE-2026-27735
+- GHSA-vjqx-cfc4-9h6v
+class: path-traversal
+title: git_add staged a file from outside the repository (scalar form)
+notes: The scalar form of the same advisory.  Blocked by path_prefix since
+  0.2; kept in the corpus so the list form has a control to compare against.
+server: git-server
+documented_miss: false
+primary: m1
+tool:
+  name: git_add
+  description: Stage one file into the repository index.
+  inputSchema:
+    type: object
+    properties:
+      files:
+        type: string
+      repo_path:
+        type: string
+    required:
+    - files
+calls:
+- id: m1
+  kind: malicious
+  rationale: "The corpus payload verbatim: a traversal in a single-path argument."
+  arguments:
+    files: ../CANARY-ESCAPE-9f3a.txt
+    repo_path: cases/workspace/repo-a
+  expected: block
+- id: l1
+  kind: legitimate
+  rationale: Staging a workspace file.
+  arguments:
+    files: cases/workspace/repo-a/src/app.py
+    repo_path: cases/workspace/repo-a
+  expected: allow

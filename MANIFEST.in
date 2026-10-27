@@ -1,0 +1,21 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include MANIFEST.md
+include REPORT.md
+include VERIFY.md
+include SECURITY.md
+include CONTRIBUTING.md
+include pyproject.toml
+
+recursive-include tests *.py
+recursive-include examples *.yaml *.json *.toml
+recursive-include docs *.md
+recursive-include demo *.py *.yaml *.md *.jsonl *.txt
+recursive-include corpus *.yaml *.md
+recursive-include tools *.py *.yaml *.md *.txt
+
+global-exclude __pycache__/*
+global-exclude *.py[cod]
+global-exclude .DS_Store
+prune src/mcp_guard.egg-info

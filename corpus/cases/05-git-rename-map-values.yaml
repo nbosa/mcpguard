@@ -1,0 +1,56 @@
+# 05-git-rename-map-values
+# The map form where *both* sides of the map are paths.
+# class: path-traversal | documented_miss: false
+#
+# `git_rename({"old": "new"})` hides two paths in one argument: the key is the
+# path that is read and the value is the path that is written.  The reference
+# policy declares `keys` and `values`, so both sides are checked.
+#
+# The 0.4 reference policy could not express this at all: `path_prefix` on a
+# mapping yields a violation for the whole value, not a descent into it.
+case_id: 05-git-rename-map-values
+entry: 5
+entry_ids:
+- CVE-2026-27735
+- GHSA-vjqx-cfc4-9h6v
+class: path-traversal
+title: git_rename renamed a file to a path outside the repository
+notes: The map form of the same advisory, on the side of the map that v4
+  could not reach at all.
+server: git-server
+documented_miss: false
+primary: m1
+tool:
+  name: git_rename
+  description: Rename files inside the repository.
+  inputSchema:
+    type: object
+    properties:
+      renames:
+        type: object
+        additionalProperties:
+          type: string
+    required:
+    - renames
+calls:
+- id: m1
+  kind: malicious
+  rationale: "A traversal in the value of the map: the path that is written."
+  arguments:
+    renames:
+      cases/workspace/repo-a/src/app.py: ../CANARY-ESCAPE-9f3a.txt
+  expected: block
+- id: m2
+  kind: malicious
+  rationale: "A traversal in the key of the map: the path that is read."
+  arguments:
+    renames:
+      ../CANARY-ESCAPE-9f3a.txt: cases/workspace/repo-a/src/app.py
+  expected: block
+- id: l1
+  kind: legitimate
+  rationale: Renaming a workspace file to another workspace path.
+  arguments:
+    renames:
+      cases/workspace/repo-a/src/app.py: cases/workspace/repo-a/src/util.py
+  expected: allow

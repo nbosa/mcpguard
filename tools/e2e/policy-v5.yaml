@@ -1,0 +1,14 @@
+# The constraint mcp-guard 0.5 can express for a list: the elements.
+version: 1
+default_action: deny
+tools:
+  git_add_many:
+    action: allow
+    arguments:
+      files:
+        type: array
+        required: true
+        max_length: 64
+        items:
+          type: string
+          path_prefix: "./cases/workspace"

@@ -1,0 +1,67 @@
+# Strict example policy for mcp-guard.
+#
+#   mcp-guard check transcript.json --policy examples/policy.toml
+#
+# Compared with the built-in default this policy
+#   * confines every path to /srv/app,
+#   * fails on MEDIUM instead of HIGH,
+#   * pins the known canary tokens,
+#   * and adds a custom rule for internal host names.
+
+[meta]
+name = "strict-example"
+version = "1.0.0"
+locale = "en"
+
+[settings]
+fail_on = "MEDIUM"
+warn_on = "LOW"
+redact_evidence = true
+max_evidence_chars = 160
+strict = true
+
+[settings.path]
+sensitive_names = [".ssh", ".aws", ".gnupg", ".kube", ".docker", "credentials"]
+sensitive_files = ["id_rsa", "id_ed25519", ".env", "*.pem", "*.key", "shadow"]
+system_prefixes = ["/etc", "/proc", "/sys", "/dev", "/root"]
+allowed_roots = ["/srv/app"]
+sensitive_root = "~"
+
+[settings.canary]
+tokens = [
+  "CANARY-AB12-CD34",
+  "CANARY-ZZ99-QQ11",
+]
+egress_tools = ["http_post", "http_fetch", "send_email", "slack_post"]
+entropy_threshold = 4.0
+min_blob_len = 32
+scan_results = true
+block_on_match = true
+
+[settings.ansi]
+allow_ansi = false
+max_output_chars = 50000
+strip_control_chars = true
+detect_bidi = true
+
+[settings.etdi]
+require_pins = true
+fail_on_drift = true
+allow_unpinned = false
+
+# Quiet the path rules down to HIGH: an auditor wants the summary, not noise.
+[[rule]]
+id = "PATH-007"
+plugin = "path_shape"
+severity = "HIGH"
+message = "Path targets a system location"
+
+# Custom rule: any mention of an internal host name is a finding.
+[[rule]]
+id = "CUSTOM-001"
+plugin = "custom"
+enabled = true
+severity = "HIGH"
+regex = "\\b[a-z0-9-]+\\.corp\\.internal\\b"
+target = "any"
+message = "Internal host name referenced in the payload"

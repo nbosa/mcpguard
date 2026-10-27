@@ -1,0 +1,49 @@
+# 04-write-files-map
+# The map form: a tool that takes paths as *keys*.
+# class: path-traversal | documented_miss: false
+#
+# A dict-shaped path map is the other way a path hides from a scalar
+# constraint.  The reference policy declares `keys` and `values`, so both
+# sides are checked; a key that leaves the workspace refuses the call.
+#
+# The v4 reference policy could not express this at all: `path_prefix` on a
+# mapping yields a violation for the whole value, not a descent into it.
+case_id: 04-write-files-map
+entry: 5
+entry_ids:
+- CVE-2026-27735
+- GHSA-vjqx-cfc4-9h6v
+class: path-traversal
+title: write_files wrote a file from outside the repository (map form)
+notes: The map form of the same advisory, closed by the `keys` and `values`
+  constraints of 0.5.
+server: git-server
+documented_miss: false
+primary: m1
+tool:
+  name: write_files
+  description: Write several files at once.
+  inputSchema:
+    type: object
+    properties:
+      files:
+        type: object
+        additionalProperties:
+          type: string
+    required:
+    - files
+calls:
+- id: m1
+  kind: malicious
+  rationale: A traversal in a key of the path map.
+  arguments:
+    files:
+      ../CANARY-ESCAPE-9f3a.txt: secret
+  expected: block
+- id: l1
+  kind: legitimate
+  rationale: Writing workspace files.
+  arguments:
+    files:
+      cases/workspace/repo-a/src/app.py: package main
+  expected: allow

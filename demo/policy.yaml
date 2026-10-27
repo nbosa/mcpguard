@@ -1,0 +1,44 @@
+# mcp-guard demo policy.
+#
+# Everything that is not listed here is denied (default deny).
+# Relative paths are resolved against the working directory of the proxy,
+# so this file is meant to be used from the root of the repository.
+
+version: 1
+default_action: deny
+
+session:
+  # The ephemeral session token of this demo lives for five minutes.
+  ttl_seconds: 300
+
+tools:
+  read_file:
+    action: allow
+    reason: "reading inside the demo sandbox is allowed"
+    rate_limit_per_minute: 10
+    arguments:
+      path:
+        type: string
+        required: true
+        max_length: 4096
+        # Only files inside ./demo/sandbox may be read.  The path is
+        # normalised first: "..", absolute paths and symlinks that leave the
+        # directory are refused.
+        path_prefix: "./demo/sandbox"
+
+  run_shell:
+    action: deny
+    reason: "shell access is not permitted by policy"
+
+  send_email:
+    action: allow
+    require_approval: true
+    reason: "outbound e-mail needs an explicit approval"
+    arguments:
+      to:
+        type: string
+        required: true
+        regex: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+      body:
+        type: string
+        max_length: 2000
